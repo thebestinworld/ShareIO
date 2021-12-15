@@ -1,6 +1,7 @@
 package com.share.io.security;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.share.io.model.role.Role;
 import com.share.io.model.user.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -9,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
@@ -21,16 +23,19 @@ public class UserDetailsImpl implements UserDetails {
 
     private final String email;
 
+    private final Set<Role> roles;
+
     @JsonIgnore
     private final String password;
 
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id, String username, String email, String password,
+    public UserDetailsImpl(Long id, String username, String email, String password, Set<Role> roles,
                            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.email = email;
+        this.roles = roles;
         this.password = password;
         this.authorities = authorities;
     }
@@ -45,6 +50,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
+                user.getRoles(),
                 authorities);
     }
 
@@ -59,6 +65,10 @@ public class UserDetailsImpl implements UserDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
     }
 
     @Override

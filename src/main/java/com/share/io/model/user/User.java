@@ -1,6 +1,7 @@
 package com.share.io.model.user;
 
 
+import com.share.io.model.file.File;
 import com.share.io.model.role.Role;
 
 import javax.persistence.Entity;
@@ -11,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Email;
@@ -49,6 +51,17 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
+
+
+    @OneToMany(mappedBy="uploader")
+    private Set<File> uploadedFiles;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_files",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "file_id"))
+    private Set<File> sharedFiles;
 
     public User() {
     }
@@ -97,5 +110,21 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public Set<File> getUploadedFiles() {
+        return uploadedFiles;
+    }
+
+    public void setUploadedFiles(Set<File> uploadedFiles) {
+        this.uploadedFiles = uploadedFiles;
+    }
+
+    public Set<File> getSharedFiles() {
+        return sharedFiles;
+    }
+
+    public void setSharedFiles(Set<File> sharedFiles) {
+        this.sharedFiles = sharedFiles;
     }
 }
