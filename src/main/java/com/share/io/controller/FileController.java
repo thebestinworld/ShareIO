@@ -1,6 +1,8 @@
 package com.share.io.controller;
 
+import com.share.io.dto.file.FileShareDTO;
 import com.share.io.dto.file.FileUploadDTO;
+import com.share.io.dto.query.file.FileQuery;
 import com.share.io.dto.response.FileResponse;
 import com.share.io.dto.response.MessageResponse;
 import com.share.io.model.file.File;
@@ -10,6 +12,7 @@ import com.share.io.service.file.FileStorageService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,10 +24,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-//TODO: Add authorization
 @Controller
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/api/file")
@@ -37,6 +41,7 @@ public class FileController {
     }
 
     @PostMapping("/upload")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> uploadFile(@RequestParam("file") MultipartFile file,
                                                       @CurrentUser UserCurrent userCurrent) {
         String message;
@@ -51,6 +56,7 @@ public class FileController {
     }
 
     @PostMapping("/{id}/upload/metadata")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> uploadFileMetadata(@PathVariable("id") String id,
                                                               @RequestBody FileUploadDTO file,
                                                               @CurrentUser UserCurrent userCurrent) {
@@ -60,8 +66,19 @@ public class FileController {
 
     }
 
-    @GetMapping()
-    public ResponseEntity<List<FileResponse>> getListFiles() {
+    @PostMapping("/{id}/share")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> shareFile(@PathVariable("id") String id,
+                                                     @RequestBody FileShareDTO fileShareDTO,
+                                                     @CurrentUser UserCurrent userCurrent) {
+        fileStorageService.shareFile(id, userCurrent.getId(), fileShareDTO.getUserToShareId());
+        String message = "File shared successfully to user with id: " + fileShareDTO.getUserToShareId();
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
+    }
+
+    @GetMapping("/response")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<FileResponse>> getListFileResponse() {
         List<FileResponse> files = fileStorageService.getAllFiles().map(dbFile -> {
             String fileDownloadUri = ServletUriComponentsBuilder
                     .fromCurrentContextPath()
@@ -79,7 +96,15 @@ public class FileController {
         return ResponseEntity.status(HttpStatus.OK).body(files);
     }
 
+    @PostMapping()
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<File>> getFiles(@RequestBody FileQuery fileQuery) {
+        Collection<File> files = fileStorageService.findAllFilesBySpecification(fileQuery);
+        return ResponseEntity.status(HttpStatus.OK).body(new ArrayList<>(files));
+    }
+
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<byte[]> getFile(@PathVariable String id) {
         File fileDB = fileStorageService.getFileById(id);
 
@@ -87,4 +112,6 @@ public class FileController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDB.getName() + "\"")
                 .body(fileDB.getData());
     }
+
+    //TODO: Add search
 }

@@ -1,18 +1,34 @@
 package com.share.io.service.file;
 
 import com.share.io.dto.file.FileUploadDTO;
+import com.share.io.dto.query.file.FileQuery;
 import com.share.io.model.file.File;
 import com.share.io.model.file.FileType;
+import com.share.io.model.file.File_;
 import com.share.io.model.user.User;
-import com.share.io.repository.FileRepository;
+import com.share.io.repository.file.FileRepository;
 import com.share.io.repository.user.UserRepository;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static com.share.io.repository.file.FileSpecification.contentTypeContains;
+import static com.share.io.repository.file.FileSpecification.descriptionContains;
+import static com.share.io.repository.file.FileSpecification.extensionContains;
+import static com.share.io.repository.file.FileSpecification.fileType;
+import static com.share.io.repository.file.FileSpecification.nameContains;
+import static com.share.io.repository.file.FileSpecification.originalNameContains;
+import static com.share.io.repository.file.FileSpecification.sharedUsersContain;
+import static com.share.io.repository.file.FileSpecification.uploaderIdEquals;
+import static com.share.io.repository.file.FileSpecification.version;
+import static com.share.io.util.SqlUtil.betweenSpec;
 
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
@@ -52,6 +68,33 @@ public class FileStorageServiceImpl implements FileStorageService {
         file.setName(fileDTO.getName());
         file.setDescription(fileDTO.getDescription());
         return fileRepository.save(file);
+    }
+
+    @Override
+    public void shareFile(String id, Long userId, Long sharedToUserId) {
+        //TODO: Add logging
+        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        User user = userRepository.findById(sharedToUserId).orElseThrow(() -> new RuntimeException());
+        user.addSharedFile(file);
+        userRepository.save(user);
+    }
+
+
+    public Collection<File> findAllFilesBySpecification(FileQuery fileQuery) {
+        Specification<File> specification = uploaderIdEquals(fileQuery.getUserId())
+                .or(sharedUsersContain(fileQuery.getUserId()))
+                .and(originalNameContains(fileQuery.getOriginalName()))
+                .and(nameContains(fileQuery.getName()))
+                .and(descriptionContains(fileQuery.getDescription()))
+                .and(fileType(fileQuery.getFileType()))
+                .and(contentTypeContains(fileQuery.getContentType()))
+                .and(extensionContains(fileQuery.getExtension()))
+                .and(version(fileQuery.getVersion()))
+                .and(betweenSpec(File_.uploadDate, fileQuery.getUploadDate()));
+
+        List<File> files = fileRepository.findAll(specification);
+
+        return files;
     }
 
     @Override

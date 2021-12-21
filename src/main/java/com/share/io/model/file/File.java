@@ -12,6 +12,7 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -37,6 +38,8 @@ public class File {
     private String extension;
 
     private Long version;
+
+    private LocalDateTime uploadDate;
 
     @ManyToOne
     @JoinColumn(name="uploader_id", nullable=false)
@@ -137,5 +140,13 @@ public class File {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public LocalDateTime getUploadDate() {
+        return uploadDate;
+    }
+
+    public void setUploadDate(LocalDateTime dateUploaded) {
+        this.uploadDate = dateUploaded;
     }
 }

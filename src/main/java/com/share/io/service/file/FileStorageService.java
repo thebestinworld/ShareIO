@@ -1,9 +1,11 @@
 package com.share.io.service.file;
 
+import com.share.io.dto.query.file.FileQuery;
 import com.share.io.dto.file.FileUploadDTO;
 import com.share.io.model.file.File;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collection;
 import java.util.stream.Stream;
 
 public interface FileStorageService {
@@ -12,7 +14,11 @@ public interface FileStorageService {
 
     File saveFileMetadata(String id, FileUploadDTO fileDTO, Long uploaderId);
 
+    void shareFile(String id, Long userId, Long sharedToUserId);
+
     File getFileById(String id);
 
     Stream<File> getAllFiles();
+
+    Collection<File> findAllFilesBySpecification(FileQuery query);
 }

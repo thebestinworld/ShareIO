@@ -127,4 +127,18 @@ public class User {
     public void setSharedFiles(Set<File> sharedFiles) {
         this.sharedFiles = sharedFiles;
     }
+
+    public void addSharedFile(File file) {
+        if (sharedFiles == null) {
+            sharedFiles = new HashSet<>();
+        }
+        sharedFiles.add(file);
+    }
+
+    public void removeSharedFile(File file) {
+        if (sharedFiles == null) {
+            return;
+        }
+        sharedFiles.remove(file);
+    }
 }
