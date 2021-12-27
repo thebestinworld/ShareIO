@@ -10,9 +10,9 @@ import java.util.stream.Stream;
 
 public interface FileStorageService {
 
-    File save(MultipartFile fileData, Long uploaderId);
+    File save(String id, MultipartFile fileData, Long uploaderId);
 
-    File saveFileMetadata(String id, FileUploadDTO fileDTO, Long uploaderId);
+    File saveFileMetadata(FileUploadDTO fileDTO, Long uploaderId);
 
     void shareFile(String id, Long userId, Long sharedToUserId);
 

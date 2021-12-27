@@ -1,27 +1,12 @@
-package com.share.io.model.file;
+package com.share.io.dto.file;
 
-import com.share.io.model.user.User;
-import org.hibernate.annotations.GenericGenerator;
+import com.share.io.dto.user.UserDTO;
+import com.share.io.model.file.FileType;
 
-import javax.persistence.Entity;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.Set;
 
-@Entity
-@Table(name = "file")
-public class File {
+public class FileDTO {
 
-    @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "uuid2")
     private String id;
 
     private String originalName;
@@ -30,7 +15,6 @@ public class File {
 
     private String description;
 
-    @Enumerated
     private FileType fileType;
 
     private String contentType;
@@ -41,17 +25,14 @@ public class File {
 
     private LocalDateTime uploadDate;
 
-    @ManyToOne
-    @JoinColumn(name="uploader_id", nullable=false)
-    private User uploader;
+    private UserDTO uploader;
 
-    @ManyToMany(mappedBy = "sharedFiles")
-    Set<User> sharedUsers;
-
-    @Lob
     private byte[] data;
 
-    public File() {
+    private String url;
+
+
+    public FileDTO() {
     }
 
     public String getId() {
@@ -126,20 +107,12 @@ public class File {
         this.uploadDate = uploadDate;
     }
 
-    public User getUploader() {
+    public UserDTO getUploader() {
         return uploader;
     }
 
-    public void setUploader(User uploader) {
+    public void setUploader(UserDTO uploader) {
         this.uploader = uploader;
-    }
-
-    public Set<User> getSharedUsers() {
-        return sharedUsers;
-    }
-
-    public void setSharedUsers(Set<User> sharedUsers) {
-        this.sharedUsers = sharedUsers;
     }
 
     public byte[] getData() {
@@ -148,5 +121,13 @@ public class File {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 }

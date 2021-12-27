@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -42,17 +43,14 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public File save(MultipartFile fileData, Long uploaderId) {
+    public File save(String id, MultipartFile fileData, Long uploaderId) {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(fileData.getOriginalFilename()));
         //TODO: Add custom exceptions
-        User user = userRepository.findById(uploaderId).orElseThrow(() -> new RuntimeException());
-        File file = new File();
+        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
         try {
             file.setOriginalName(fileName);
             file.setContentType(fileData.getContentType());
-            file.setVersion(1L);
             file.setData(fileData.getBytes());
-            file.setUploader(user);
             file.setExtension(StringUtils.getFilenameExtension(fileData.getOriginalFilename()));
             file.setFileType(FileType.getFileType(file.getExtension()));
         } catch (IOException e) {
@@ -63,10 +61,14 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public File saveFileMetadata(String id, FileUploadDTO fileDTO, Long uploaderId) {
-        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+    public File saveFileMetadata(FileUploadDTO fileDTO, Long uploaderId) {
+        User user = userRepository.findById(uploaderId).orElseThrow(() -> new RuntimeException());
+        File file = new File();
         file.setName(fileDTO.getName());
         file.setDescription(fileDTO.getDescription());
+        file.setUploader(user);
+        file.setVersion(1L);
+        file.setUploadDate(LocalDateTime.now());
         return fileRepository.save(file);
     }
 

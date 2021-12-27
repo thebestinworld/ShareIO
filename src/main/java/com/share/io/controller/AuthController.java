@@ -7,7 +7,6 @@ import com.share.io.dto.request.TokenRefreshRequest;
 import com.share.io.dto.response.JwtResponse;
 import com.share.io.dto.response.MessageResponse;
 import com.share.io.dto.response.TokenRefreshResponse;
-import com.share.io.exception.TokenRefreshException;
 import com.share.io.model.role.Role;
 import com.share.io.model.role.RoleName;
 import com.share.io.model.token.RefreshToken;
@@ -33,7 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -123,12 +121,6 @@ public class AuthController {
     @PostMapping("/refresh_token")
     public ResponseEntity<TokenRefreshResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();
-//        refreshTokenService::verifyExpiration(requestRefreshToken)
-//        RefreshToken byToken = refreshTokenService.findByToken(requestRefreshToken).orElse(null);
-//        String token = jwtUtils.generateJwtTokenFromUsername(byToken.getUser().getUsername());
-//
-//        return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
-
 
         return  refreshTokenService.findByToken(requestRefreshToken)
                .map(refreshTokenService::verifyExpiration)
@@ -137,6 +129,5 @@ public class AuthController {
                     String token = jwtUtils.generateJwtTokenFromUsername(user.getUsername());
                     return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
                 }).orElse(null);
-
     }
 }

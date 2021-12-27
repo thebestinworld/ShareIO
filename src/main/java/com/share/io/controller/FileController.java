@@ -1,5 +1,6 @@
 package com.share.io.controller;
 
+import com.share.io.dto.file.FileDTO;
 import com.share.io.dto.file.FileShareDTO;
 import com.share.io.dto.file.FileUploadDTO;
 import com.share.io.dto.query.file.FileQuery;
@@ -9,7 +10,7 @@ import com.share.io.model.file.File;
 import com.share.io.security.CurrentUser;
 import com.share.io.security.UserCurrent;
 import com.share.io.service.file.FileStorageService;
-import org.springframework.http.HttpHeaders;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,13 +40,14 @@ public class FileController {
         this.fileStorageService = fileStorageService;
     }
 
-    @PostMapping("/upload")
+    @PostMapping("/{id}/upload/data")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> uploadFile(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<MessageResponse> uploadFile(@PathVariable("id") String id,
+                                                      @RequestParam("file") MultipartFile file,
                                                       @CurrentUser UserCurrent userCurrent) {
         String message;
         try {
-            File result = fileStorageService.save(file, userCurrent.getId());
+            File result = fileStorageService.save(id, file, userCurrent.getId());
             message = "Uploaded the file successfully with id: " + result.getId();
             return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
         } catch (Exception e) {
@@ -55,15 +56,14 @@ public class FileController {
         }
     }
 
-    @PostMapping("/{id}/upload/metadata")
+    @PostMapping("/upload")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> uploadFileMetadata(@PathVariable("id") String id,
-                                                              @RequestBody FileUploadDTO file,
-                                                              @CurrentUser UserCurrent userCurrent) {
-        File result = fileStorageService.saveFileMetadata(id, file, userCurrent.getId());
+    public ResponseEntity<FileDTO> uploadFileMetadata(@RequestBody FileUploadDTO file, @CurrentUser UserCurrent userCurrent) {
+        File result = fileStorageService.saveFileMetadata(file, userCurrent.getId());
         String message = "Uploaded fie metadata successfully with id: " + result.getId();
-        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
-
+        FileDTO fileDTO = new FileDTO();
+        fileDTO.setId(result.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(fileDTO);
     }
 
     @PostMapping("/{id}/share")
@@ -96,21 +96,23 @@ public class FileController {
         return ResponseEntity.status(HttpStatus.OK).body(files);
     }
 
-    @PostMapping()
+    @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<File>> getFiles(@RequestBody FileQuery fileQuery) {
+    public ResponseEntity<List<FileDTO>> getFiles(@RequestBody FileQuery fileQuery) {
+        ModelMapper modelMapper = new ModelMapper();
         Collection<File> files = fileStorageService.findAllFilesBySpecification(fileQuery);
-        return ResponseEntity.status(HttpStatus.OK).body(new ArrayList<>(files));
+        List<FileDTO> fileDTOS = files.stream()
+                .map(file -> modelMapper.map(file, FileDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(fileDTOS);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<byte[]> getFile(@PathVariable String id) {
+    public ResponseEntity<FileDTO> getFile(@PathVariable String id) {
         File fileDB = fileStorageService.getFileById(id);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDB.getName() + "\"")
-                .body(fileDB.getData());
+        ModelMapper modelMapper = new ModelMapper();
+        return ResponseEntity.status(HttpStatus.OK).body(modelMapper.map(fileDB, FileDTO.class));
     }
 
     //TODO: Add search
