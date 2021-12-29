@@ -41,6 +41,8 @@ public class File {
 
     private LocalDateTime uploadDate;
 
+    private LocalDateTime updateDate;
+
     @ManyToOne
     @JoinColumn(name="uploader_id", nullable=false)
     private User uploader;
@@ -148,5 +150,13 @@ public class File {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public LocalDateTime getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(LocalDateTime updateDate) {
+        this.updateDate = updateDate;
     }
 }

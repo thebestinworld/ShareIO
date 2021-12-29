@@ -27,7 +27,7 @@ public class FileDTO {
 
     private UserDTO uploader;
 
-    private byte[] data;
+    private String encodedData;
 
     private String url;
 
@@ -115,12 +115,12 @@ public class FileDTO {
         this.uploader = uploader;
     }
 
-    public byte[] getData() {
-        return data;
+    public String getEncodedData() {
+        return encodedData;
     }
 
-    public void setData(byte[] data) {
-        this.data = data;
+    public void setEncodedData(String encodedData) {
+        this.encodedData = encodedData;
     }
 
     public String getUrl() {

@@ -1,5 +1,6 @@
 package com.share.io.service.file;
 
+import com.share.io.dto.file.FileUpdateDTO;
 import com.share.io.dto.file.FileUploadDTO;
 import com.share.io.dto.query.file.FileQuery;
 import com.share.io.model.file.File;
@@ -70,6 +71,39 @@ public class FileStorageServiceImpl implements FileStorageService {
         file.setVersion(1L);
         file.setUploadDate(LocalDateTime.now());
         return fileRepository.save(file);
+    }
+
+    @Override
+    public File update(String id, MultipartFile fileData) {
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(fileData.getOriginalFilename()));
+        //TODO: Add custom exceptions
+        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        try {
+            file.setOriginalName(fileName);
+            file.setContentType(fileData.getContentType());
+            file.setData(fileData.getBytes());
+            file.setExtension(StringUtils.getFilenameExtension(fileData.getOriginalFilename()));
+            file.setFileType(FileType.getFileType(file.getExtension()));
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
+
+        return fileRepository.save(file);
+    }
+
+    @Override
+    public File updateFileMetaData(String id, FileUpdateDTO fileUpdateDTO) {
+        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        file.setUpdateDate(LocalDateTime.now());
+        file.setName(fileUpdateDTO.getName());
+        file.setDescription(fileUpdateDTO.getDescription());
+        file.setVersion(file.getVersion() + 1L);
+        return fileRepository.save(file);
+    }
+
+    @Override
+    public void deleteFile(String id) {
+        this.fileRepository.deleteById(id);
     }
 
     @Override

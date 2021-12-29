@@ -2,6 +2,7 @@ package com.share.io.controller;
 
 import com.share.io.dto.file.FileDTO;
 import com.share.io.dto.file.FileShareDTO;
+import com.share.io.dto.file.FileUpdateDTO;
 import com.share.io.dto.file.FileUploadDTO;
 import com.share.io.dto.query.file.FileQuery;
 import com.share.io.dto.response.FileResponse;
@@ -16,15 +17,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -112,7 +117,44 @@ public class FileController {
     public ResponseEntity<FileDTO> getFile(@PathVariable String id) {
         File fileDB = fileStorageService.getFileById(id);
         ModelMapper modelMapper = new ModelMapper();
-        return ResponseEntity.status(HttpStatus.OK).body(modelMapper.map(fileDB, FileDTO.class));
+        FileDTO map = modelMapper.map(fileDB, FileDTO.class);
+        String byteToString = Base64.getEncoder().encodeToString(fileDB.getData());
+        map.setEncodedData(byteToString);
+        return ResponseEntity.status(HttpStatus.OK).body(map);
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<FileDTO> updateFile(@PathVariable String id, @RequestBody FileUpdateDTO dto) {
+        File fileDB = fileStorageService.updateFileMetaData(id, dto);
+        ModelMapper modelMapper = new ModelMapper();
+        FileDTO map = modelMapper.map(fileDB, FileDTO.class);
+        String byteToString = Base64.getEncoder().encodeToString(fileDB.getData());
+        map.setEncodedData(byteToString);
+        return ResponseEntity.status(HttpStatus.OK).body(map);
+    }
+
+    @PostMapping("/{id}/data")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> updateFileData(@PathVariable("id") String id,
+                                                          @RequestParam("file") MultipartFile file) {
+        String message;
+        try {
+            File result = fileStorageService.update(id, file);
+            message = "Uploaded the file successfully with id: " + result.getId();
+
+            return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
+        } catch (Exception e) {
+            message = "Could not upload the file: " + file.getOriginalFilename() + "!";
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageResponse(message));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> deleteFile(@PathVariable String id) {
+        fileStorageService.deleteFile(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Deleted");
     }
 
     //TODO: Add search

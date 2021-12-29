@@ -1,9 +1,9 @@
 package com.share.io.controller;
 
 
-import com.share.io.dto.query.file.FileQuery;
 import com.share.io.repository.user.UserRepository;
 import com.share.io.service.file.FileStorageService;
+import com.share.io.service.notification.NotificationService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,21 +17,17 @@ public class TestController {
 
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
-    public TestController(UserRepository userRepository, FileStorageService fileStorageService) {
+    public TestController(UserRepository userRepository, FileStorageService fileStorageService, NotificationService notificationService) {
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/all")
     public String allAccess() {
-       // Optional<User> byId = userRepository.findById(1L);
-        FileQuery fileQuery = new FileQuery();
-        //fileQuery.setUserId(1L);
-        fileQuery.setOriginalName("Capt");
-//        fileQuery.setName("test");
-        fileQuery.setDescription("cool");
-        fileStorageService.findAllFilesBySpecification(fileQuery);
+        notificationService.sendNotification();
         return "Public Content.";
     }
 
