@@ -6,9 +6,12 @@ import com.share.io.dto.query.file.FileQuery;
 import com.share.io.model.file.File;
 import com.share.io.model.file.FileType;
 import com.share.io.model.file.File_;
+import com.share.io.model.notification.NotificationType;
 import com.share.io.model.user.User;
 import com.share.io.repository.file.FileRepository;
 import com.share.io.repository.user.UserRepository;
+import com.share.io.security.UserCurrent;
+import com.share.io.service.notification.NotificationService;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -19,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.share.io.repository.file.FileSpecification.contentTypeContains;
@@ -37,10 +41,14 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public FileStorageServiceImpl(FileRepository fileRepository, UserRepository userRepository) {
+    public FileStorageServiceImpl(FileRepository fileRepository,
+                                  UserRepository userRepository,
+                                  NotificationService notificationService) {
         this.fileRepository = fileRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -74,7 +82,7 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public File update(String id, MultipartFile fileData) {
+    public File update(String id, MultipartFile fileData, UserCurrent userCurrent) {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(fileData.getOriginalFilename()));
         //TODO: Add custom exceptions
         File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
@@ -88,31 +96,43 @@ public class FileStorageServiceImpl implements FileStorageService {
             throw new RuntimeException();
         }
 
-        return fileRepository.save(file);
+        File result = fileRepository.save(file);
+        notificationService.sendNotification(NotificationType.FILE_UPDATED,
+                file.getName(), file.getId(), file.getUploader().getId(), userCurrent.getId(), userCurrent.getName());
+        return result;
     }
 
     @Override
-    public File updateFileMetaData(String id, FileUpdateDTO fileUpdateDTO) {
+    public File updateFileMetaData(String id, FileUpdateDTO fileUpdateDTO, UserCurrent userCurrent) {
         File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
         file.setUpdateDate(LocalDateTime.now());
         file.setName(fileUpdateDTO.getName());
         file.setDescription(fileUpdateDTO.getDescription());
         file.setVersion(file.getVersion() + 1L);
-        return fileRepository.save(file);
+        File save = fileRepository.save(file);
+        notificationService.sendNotification(NotificationType.FILE_UPDATED,
+                file.getName(), file.getId(), file.getUploader().getId(), userCurrent.getId(), userCurrent.getName());
+        return save;
     }
 
     @Override
-    public void deleteFile(String id) {
+    public void deleteFile(String id, UserCurrent userCurrent) {
+        Optional<File> file = this.fileRepository.findById(id);
+        file.ifPresent(value -> notificationService.sendNotification(NotificationType.FILE_DELETED,
+                value.getName(), value.getId(), value.getUploader().getId(),
+                userCurrent.getId(), userCurrent.getName()));
         this.fileRepository.deleteById(id);
     }
 
     @Override
-    public void shareFile(String id, Long userId, Long sharedToUserId) {
+    public void shareFile(String id, Long userId, Long sharedToUserId, UserCurrent userCurrent) {
         //TODO: Add logging
         File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
         User user = userRepository.findById(sharedToUserId).orElseThrow(() -> new RuntimeException());
         user.addSharedFile(file);
         userRepository.save(user);
+        notificationService.sendNotification(NotificationType.FILE_SHARED,
+                file.getName(), file.getId(), sharedToUserId, userCurrent.getId(), userCurrent.getName());
     }
 
 

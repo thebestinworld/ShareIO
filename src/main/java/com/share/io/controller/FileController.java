@@ -76,7 +76,7 @@ public class FileController {
     public ResponseEntity<MessageResponse> shareFile(@PathVariable("id") String id,
                                                      @RequestBody FileShareDTO fileShareDTO,
                                                      @CurrentUser UserCurrent userCurrent) {
-        fileStorageService.shareFile(id, userCurrent.getId(), fileShareDTO.getUserToShareId());
+        fileStorageService.shareFile(id, userCurrent.getId(), fileShareDTO.getUserToShareId(), userCurrent);
         String message = "File shared successfully to user with id: " + fileShareDTO.getUserToShareId();
         return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
     }
@@ -125,8 +125,10 @@ public class FileController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<FileDTO> updateFile(@PathVariable String id, @RequestBody FileUpdateDTO dto) {
-        File fileDB = fileStorageService.updateFileMetaData(id, dto);
+    public ResponseEntity<FileDTO> updateFile(@PathVariable String id,
+                                              @RequestBody FileUpdateDTO dto,
+                                              @CurrentUser UserCurrent userCurrent) {
+        File fileDB = fileStorageService.updateFileMetaData(id, dto, userCurrent);
         ModelMapper modelMapper = new ModelMapper();
         FileDTO map = modelMapper.map(fileDB, FileDTO.class);
         String byteToString = Base64.getEncoder().encodeToString(fileDB.getData());
@@ -137,10 +139,11 @@ public class FileController {
     @PostMapping("/{id}/data")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> updateFileData(@PathVariable("id") String id,
-                                                          @RequestParam("file") MultipartFile file) {
+                                                          @RequestParam("file") MultipartFile file,
+                                                          @CurrentUser UserCurrent userCurrent) {
         String message;
         try {
-            File result = fileStorageService.update(id, file);
+            File result = fileStorageService.update(id, file, userCurrent);
             message = "Uploaded the file successfully with id: " + result.getId();
 
             return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
@@ -152,8 +155,8 @@ public class FileController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteFile(@PathVariable String id) {
-        fileStorageService.deleteFile(id);
+    public ResponseEntity<?> deleteFile(@PathVariable String id, @CurrentUser UserCurrent userCurrent) {
+        fileStorageService.deleteFile(id, userCurrent);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Deleted");
     }
 

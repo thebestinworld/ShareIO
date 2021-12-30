@@ -1,6 +1,7 @@
 package com.share.io.controller;
 
 
+import com.share.io.model.notification.NotificationType;
 import com.share.io.repository.user.UserRepository;
 import com.share.io.service.file.FileStorageService;
 import com.share.io.service.notification.NotificationService;
@@ -27,7 +28,6 @@ public class TestController {
 
     @GetMapping("/all")
     public String allAccess() {
-        notificationService.sendNotification();
         return "Public Content.";
     }
 
