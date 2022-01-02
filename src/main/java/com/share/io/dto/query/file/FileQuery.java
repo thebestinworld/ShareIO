@@ -1,9 +1,6 @@
 package com.share.io.dto.query.file;
 
-import com.share.io.dto.query.BetweenQuery;
-import com.share.io.model.file.FileType;
-
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class FileQuery {
 
@@ -15,7 +12,7 @@ public class FileQuery {
 
     private String description;
 
-    private FileType fileType;
+    private String fileType;
 
     private String contentType;
 
@@ -23,7 +20,11 @@ public class FileQuery {
 
     private Long version;
 
-    private BetweenQuery<LocalDateTime> uploadDate;
+    private LocalDate uploadDate;
+
+    private LocalDate updateDate;
+
+    private String uploaderName;
 
     public Long getUserId() {
         return userId;
@@ -57,11 +58,11 @@ public class FileQuery {
         this.description = description;
     }
 
-    public FileType getFileType() {
+    public String getFileType() {
         return fileType;
     }
 
-    public void setFileType(FileType fileType) {
+    public void setFileType(String fileType) {
         this.fileType = fileType;
     }
 
@@ -89,11 +90,27 @@ public class FileQuery {
         this.version = version;
     }
 
-    public BetweenQuery<LocalDateTime> getUploadDate() {
+    public LocalDate getUploadDate() {
         return uploadDate;
     }
 
-    public void setUploadDate(BetweenQuery<LocalDateTime> uploadDate) {
+    public void setUploadDate(LocalDate uploadDate) {
         this.uploadDate = uploadDate;
+    }
+
+    public LocalDate getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(LocalDate updateDate) {
+        this.updateDate = updateDate;
+    }
+
+    public String getUploaderName() {
+        return uploaderName;
+    }
+
+    public void setUploaderName(String uploaderName) {
+        this.uploaderName = uploaderName;
     }
 }

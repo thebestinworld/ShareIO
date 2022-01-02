@@ -1,5 +1,7 @@
 package com.share.io.model.file;
 
+import org.springframework.util.ObjectUtils;
+
 import java.util.List;
 
 public enum FileType {
@@ -14,12 +16,19 @@ public enum FileType {
         this.allowedExtensions = allowedExtensions;
     }
 
-    public static FileType getFileType(String extension) {
+    public static FileType getFileTypeFromExtension(String extension) {
         for (FileType value : FileType.values()) {
             if (value.allowedExtensions.contains(extension.toUpperCase())) {
                 return value;
             }
         }
         throw new RuntimeException("Not allowed extension.");
+    }
+
+    public static FileType getFileType(String fileType) {
+        if (ObjectUtils.isEmpty(fileType)) {
+            return null;
+        }
+        return FileType.valueOf(fileType);
     }
 }

@@ -23,14 +23,15 @@ public class FileDTO {
 
     private Long version;
 
-    private LocalDateTime uploadDate;
+    private String uploadDate;
+
+    private String updateDate;
 
     private UserDTO uploader;
 
     private String encodedData;
 
-    private String url;
-
+    private String uploaderName;
 
     public FileDTO() {
     }
@@ -99,11 +100,11 @@ public class FileDTO {
         this.version = version;
     }
 
-    public LocalDateTime getUploadDate() {
+    public String getUploadDate() {
         return uploadDate;
     }
 
-    public void setUploadDate(LocalDateTime uploadDate) {
+    public void setUploadDate(String uploadDate) {
         this.uploadDate = uploadDate;
     }
 
@@ -123,11 +124,19 @@ public class FileDTO {
         this.encodedData = encodedData;
     }
 
-    public String getUrl() {
-        return url;
+    public String getUpdateDate() {
+        return updateDate;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setUpdateDate(String updateDate) {
+        this.updateDate = updateDate;
+    }
+
+    public String getUploaderName() {
+        return uploaderName;
+    }
+
+    public void setUploaderName(String uploaderName) {
+        this.uploaderName = uploaderName;
     }
 }

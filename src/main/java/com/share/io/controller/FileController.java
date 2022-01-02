@@ -4,6 +4,7 @@ import com.share.io.dto.file.FileDTO;
 import com.share.io.dto.file.FileShareDTO;
 import com.share.io.dto.file.FileUpdateDTO;
 import com.share.io.dto.file.FileUploadDTO;
+import com.share.io.dto.file.FileViewDTO;
 import com.share.io.dto.query.file.FileQuery;
 import com.share.io.dto.response.FileResponse;
 import com.share.io.dto.response.MessageResponse;
@@ -29,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
@@ -103,13 +106,24 @@ public class FileController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<FileDTO>> getFiles(@RequestBody FileQuery fileQuery) {
+    public ResponseEntity<FileViewDTO> getFiles(@RequestBody FileQuery fileQuery) {
         ModelMapper modelMapper = new ModelMapper();
         Collection<File> files = fileStorageService.findAllFilesBySpecification(fileQuery);
         List<FileDTO> fileDTOS = files.stream()
-                .map(file -> modelMapper.map(file, FileDTO.class))
+                .map(file -> {
+                    FileDTO map = modelMapper.map(file, FileDTO.class);
+                    String uploadDate = file.getUploadDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    map.setUploadDate(uploadDate);
+                    String updateDate = file.getUpdateDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    map.setUpdateDate(updateDate);
+                    map.setUploaderName(file.getUploader().getUsername());
+                    return map;
+                })
                 .collect(Collectors.toList());
-        return ResponseEntity.status(HttpStatus.OK).body(fileDTOS);
+        FileViewDTO viewDTO = new FileViewDTO();
+        viewDTO.setItems(fileDTOS);
+        viewDTO.setTotalCount(viewDTO.getTotalCount());
+        return ResponseEntity.status(HttpStatus.OK).body(viewDTO);
     }
 
     @GetMapping("/{id}")

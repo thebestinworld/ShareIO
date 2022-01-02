@@ -4,12 +4,15 @@ import com.share.io.model.file.File;
 import com.share.io.model.file.FileType;
 import com.share.io.model.file.File_;
 import com.share.io.model.user.User;
+import com.share.io.model.user.User_;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.ObjectUtils;
 
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 
 import static com.share.io.model.user.User_.ID;
@@ -19,7 +22,7 @@ import static com.share.io.util.SqlUtil.getContainsPredicate;
 public class FileSpecification {
 
 
-    public static final String SQl_DATE_TIME_PATTERN = "MMM dd, yyyy, hh:mm tt";
+    public static final String MY_SQl_DATE_TIME_PATTERN = "%Y-%m-%d %T.%f";
 
     public static Specification<File> uploaderIdEquals(Long userId) {
         if (ObjectUtils.isEmpty(userId)) {
@@ -27,6 +30,15 @@ public class FileSpecification {
         }
         return (root, criteriaQuery, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get(File_.uploader), userId);
+    }
+
+    public static Specification<File> uploaderNameContains(String query) {
+        if (ObjectUtils.isEmpty(query)) {
+            return Specification.where(null);
+        }
+        return (root, criteriaQuery, criteriaBuilder) ->
+                getContainsPredicate(criteriaBuilder,
+                        root.get(File_.uploader).get(User_.username), query);
     }
 
     public static Specification<File> sharedUsersContain(Long userId) {
@@ -101,13 +113,26 @@ public class FileSpecification {
                 criteriaBuilder.equal(root.get(File_.version), version);
     }
 
-    public static Specification<File> uploadDateContains(String query) {
-        if (ObjectUtils.isEmpty(query)) {
+    public static Specification<File> uploadDateContains(LocalDate uploadDate) {
+        if (ObjectUtils.isEmpty(uploadDate)) {
             return Specification.where(null);
         }
+        String query = uploadDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return (root, criteriaQuery, criteriaBuilder) -> {
-            Expression<String> formattedDate = criteriaBuilder.function("FORMAT",
-                    String.class, root.get(File_.uploadDate), criteriaBuilder.literal(SQl_DATE_TIME_PATTERN));
+            Expression<String> formattedDate = criteriaBuilder.function("DATE_FORMAT",
+                    String.class, root.get(File_.uploadDate), criteriaBuilder.literal(MY_SQl_DATE_TIME_PATTERN));
+            return getContainsPredicate(criteriaBuilder, formattedDate, query);
+        };
+    }
+
+    public static Specification<File> updateDateContains(LocalDate updateDate) {
+        if (ObjectUtils.isEmpty(updateDate)) {
+            return Specification.where(null);
+        }
+        String query = updateDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            Expression<String> formattedDate = criteriaBuilder.function("DATE_FORMAT",
+                    String.class, root.get(File_.updateDate), criteriaBuilder.literal(MY_SQl_DATE_TIME_PATTERN));
             return getContainsPredicate(criteriaBuilder, formattedDate, query);
         };
     }

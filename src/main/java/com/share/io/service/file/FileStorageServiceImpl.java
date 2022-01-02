@@ -5,7 +5,6 @@ import com.share.io.dto.file.FileUploadDTO;
 import com.share.io.dto.query.file.FileQuery;
 import com.share.io.model.file.File;
 import com.share.io.model.file.FileType;
-import com.share.io.model.file.File_;
 import com.share.io.model.notification.NotificationType;
 import com.share.io.model.user.User;
 import com.share.io.repository.file.FileRepository;
@@ -32,9 +31,11 @@ import static com.share.io.repository.file.FileSpecification.fileType;
 import static com.share.io.repository.file.FileSpecification.nameContains;
 import static com.share.io.repository.file.FileSpecification.originalNameContains;
 import static com.share.io.repository.file.FileSpecification.sharedUsersContain;
+import static com.share.io.repository.file.FileSpecification.updateDateContains;
+import static com.share.io.repository.file.FileSpecification.uploadDateContains;
 import static com.share.io.repository.file.FileSpecification.uploaderIdEquals;
+import static com.share.io.repository.file.FileSpecification.uploaderNameContains;
 import static com.share.io.repository.file.FileSpecification.version;
-import static com.share.io.util.SqlUtil.betweenSpec;
 
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
@@ -61,7 +62,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             file.setContentType(fileData.getContentType());
             file.setData(fileData.getBytes());
             file.setExtension(StringUtils.getFilenameExtension(fileData.getOriginalFilename()));
-            file.setFileType(FileType.getFileType(file.getExtension()));
+            file.setFileType(FileType.getFileTypeFromExtension(file.getExtension()));
         } catch (IOException e) {
             throw new RuntimeException();
         }
@@ -91,7 +92,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             file.setContentType(fileData.getContentType());
             file.setData(fileData.getBytes());
             file.setExtension(StringUtils.getFilenameExtension(fileData.getOriginalFilename()));
-            file.setFileType(FileType.getFileType(file.getExtension()));
+            file.setFileType(FileType.getFileTypeFromExtension(file.getExtension()));
         } catch (IOException e) {
             throw new RuntimeException();
         }
@@ -137,16 +138,19 @@ public class FileStorageServiceImpl implements FileStorageService {
 
 
     public Collection<File> findAllFilesBySpecification(FileQuery fileQuery) {
+        //TODO: Add sorting
         Specification<File> specification = uploaderIdEquals(fileQuery.getUserId())
                 .or(sharedUsersContain(fileQuery.getUserId()))
-                .and(originalNameContains(fileQuery.getOriginalName()))
                 .and(nameContains(fileQuery.getName()))
+                .and(originalNameContains(fileQuery.getOriginalName()))
                 .and(descriptionContains(fileQuery.getDescription()))
-                .and(fileType(fileQuery.getFileType()))
+                .and(fileType(FileType.getFileType(fileQuery.getFileType())))
                 .and(contentTypeContains(fileQuery.getContentType()))
                 .and(extensionContains(fileQuery.getExtension()))
                 .and(version(fileQuery.getVersion()))
-                .and(betweenSpec(File_.uploadDate, fileQuery.getUploadDate()));
+                .and(uploadDateContains(fileQuery.getUploadDate()))
+                .and(updateDateContains(fileQuery.getUpdateDate()))
+                .and(uploaderNameContains(fileQuery.getUploaderName()));
 
         List<File> files = fileRepository.findAll(specification);
 
