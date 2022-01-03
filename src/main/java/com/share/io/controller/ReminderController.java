@@ -32,22 +32,22 @@ public class ReminderController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<Reminder> createNotification(@RequestBody ReminderDTO reminderDTO,
-                                                       @CurrentUser UserCurrent userCurrent) {
+    public ResponseEntity<Reminder> createReminder(@RequestBody ReminderDTO reminderDTO,
+                                                   @CurrentUser UserCurrent userCurrent) {
         Reminder result = reminderService.createReminder(reminderDTO, userCurrent.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<Reminder>> findAllNotification(@CurrentUser UserCurrent userCurrent) {
+    public ResponseEntity<List<Reminder>> findAllReminders(@CurrentUser UserCurrent userCurrent) {
         List<Reminder> result = reminderService.findAll(userCurrent.getId());
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteFile(@PathVariable Long id) {
+    public ResponseEntity<String> deleteReminder(@PathVariable Long id) {
         this.reminderService.deleteReminder(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Deleted");
     }

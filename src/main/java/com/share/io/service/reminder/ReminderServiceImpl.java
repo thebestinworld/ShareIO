@@ -28,7 +28,7 @@ public class ReminderServiceImpl implements ReminderService {
         Reminder reminder = new Reminder();
         reminder.setMessage(reminderDTO.getMessage());
         reminder.setUserId(userId);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         LocalDateTime dateTime = LocalDateTime.parse(reminderDTO.getTime(), formatter);
         reminder.setTime(dateTime);
         return this.reminderRepository.save(reminder);

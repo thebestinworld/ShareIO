@@ -1,8 +1,8 @@
 package com.share.io.controller;
 
 
-import com.share.io.model.notification.NotificationType;
 import com.share.io.repository.user.UserRepository;
+import com.share.io.service.email.EmailService;
 import com.share.io.service.file.FileStorageService;
 import com.share.io.service.notification.NotificationService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,15 +19,19 @@ public class TestController {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
-    public TestController(UserRepository userRepository, FileStorageService fileStorageService, NotificationService notificationService) {
+    public TestController(UserRepository userRepository, FileStorageService fileStorageService,
+                          NotificationService notificationService, EmailService emailService) {
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
         this.notificationService = notificationService;
+        this.emailService = emailService;
     }
 
     @GetMapping("/all")
     public String allAccess() {
+        this.emailService.sendSimpleMessage("josedavid.m.jara@gmail.com", "test", "Testing");
         return "Public Content.";
     }
 
