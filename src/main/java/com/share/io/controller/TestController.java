@@ -5,6 +5,7 @@ import com.share.io.repository.user.UserRepository;
 import com.share.io.service.email.EmailService;
 import com.share.io.service.file.FileStorageService;
 import com.share.io.service.notification.NotificationService;
+import com.share.io.service.reminder.ReminderService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,18 +21,19 @@ public class TestController {
     private final FileStorageService fileStorageService;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final ReminderService reminderService;
 
     public TestController(UserRepository userRepository, FileStorageService fileStorageService,
-                          NotificationService notificationService, EmailService emailService) {
+                          NotificationService notificationService, EmailService emailService, ReminderService reminderService) {
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
         this.notificationService = notificationService;
         this.emailService = emailService;
+        this.reminderService = reminderService;
     }
 
     @GetMapping("/all")
     public String allAccess() {
-        this.emailService.sendSimpleMessage("josedavid.m.jara@gmail.com", "test", "Testing");
         return "Public Content.";
     }
 
