@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface NotificationService {
 
-    void sendNotification(NotificationType notificationType, String fileName, String fileId,
+    void sendNotification(NotificationType notificationType, String fileName, Long fileId,
                           Long userId, Long fromUserId, String username);
 
     List<Notification> findAllByUserId(Long userId);

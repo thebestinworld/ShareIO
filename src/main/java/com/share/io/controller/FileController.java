@@ -13,6 +13,7 @@ import com.share.io.security.CurrentUser;
 import com.share.io.security.UserCurrent;
 import com.share.io.service.file.FileStorageService;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,14 +24,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Collection;
@@ -50,7 +49,7 @@ public class FileController {
 
     @PostMapping("/{id}/upload/data")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> uploadFile(@PathVariable("id") String id,
+    public ResponseEntity<MessageResponse> uploadFile(@PathVariable("id") Long id,
                                                       @RequestParam("file") MultipartFile file,
                                                       @CurrentUser UserCurrent userCurrent) {
         String message;
@@ -76,7 +75,7 @@ public class FileController {
 
     @PostMapping("/{id}/share")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> shareFile(@PathVariable("id") String id,
+    public ResponseEntity<MessageResponse> shareFile(@PathVariable("id") Long id,
                                                      @RequestBody FileShareDTO fileShareDTO,
                                                      @CurrentUser UserCurrent userCurrent) {
         fileStorageService.shareFile(id, userCurrent.getId(), fileShareDTO.getUserToShareId(), userCurrent);
@@ -87,59 +86,64 @@ public class FileController {
     @GetMapping("/response")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<List<FileResponse>> getListFileResponse() {
-        List<FileResponse> files = fileStorageService.getAllFiles().map(dbFile -> {
-            String fileDownloadUri = ServletUriComponentsBuilder
-                    .fromCurrentContextPath()
-                    .path("/file/")
-                    .path(dbFile.getId())
-                    .toUriString();
-
-            return new FileResponse(
-                    dbFile.getName(),
-                    fileDownloadUri,
-                    dbFile.getContentType(),
-                    dbFile.getData().length);
-        }).collect(Collectors.toList());
-
-        return ResponseEntity.status(HttpStatus.OK).body(files);
+        return null;
+//        List<FileResponse> files = fileStorageService.getAllFiles().map(dbFile -> {
+//            String fileDownloadUri = ServletUriComponentsBuilder
+//                    .fromCurrentContextPath()
+//                    .path("/file/")
+//                    .path(dbFile.getId())
+//                    .toUriString();
+//
+//            return new FileResponse(
+//                    dbFile.getName(),
+//                    fileDownloadUri,
+//                    dbFile.getContentType(),
+//                    dbFile.getData().length);
+//        }).collect(Collectors.toList());
+//
+//        return ResponseEntity.status(HttpStatus.OK).body(files);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<FileViewDTO> getFiles(@RequestBody FileQuery fileQuery) {
         ModelMapper modelMapper = new ModelMapper();
-        Collection<File> files = fileStorageService.findAllFilesBySpecification(fileQuery);
+        Page<File> files = fileStorageService.findAllFilesBySpecification(fileQuery);
         List<FileDTO> fileDTOS = files.stream()
                 .map(file -> {
                     FileDTO map = modelMapper.map(file, FileDTO.class);
                     String uploadDate = file.getUploadDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
                     map.setUploadDate(uploadDate);
-                    String updateDate = file.getUpdateDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-                    map.setUpdateDate(updateDate);
+                    if (file.getUpdateDate() != null) {
+                        String updateDate = file.getUpdateDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                        map.setUpdateDate(updateDate);
+                    }
+
                     map.setUploaderName(file.getUploader().getUsername());
                     return map;
                 })
                 .collect(Collectors.toList());
         FileViewDTO viewDTO = new FileViewDTO();
         viewDTO.setItems(fileDTOS);
-        viewDTO.setTotalCount(viewDTO.getTotalCount());
+        viewDTO.setTotalCount(files.getTotalElements());
         return ResponseEntity.status(HttpStatus.OK).body(viewDTO);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<FileDTO> getFile(@PathVariable String id) {
+    public ResponseEntity<FileDTO> getFile(@PathVariable Long id) {
         File fileDB = fileStorageService.getFileById(id);
         ModelMapper modelMapper = new ModelMapper();
         FileDTO map = modelMapper.map(fileDB, FileDTO.class);
         String byteToString = Base64.getEncoder().encodeToString(fileDB.getData());
         map.setEncodedData(byteToString);
+        map.setUploaderName(fileDB.getUploader().getUsername());
         return ResponseEntity.status(HttpStatus.OK).body(map);
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<FileDTO> updateFile(@PathVariable String id,
+    public ResponseEntity<FileDTO> updateFile(@PathVariable Long id,
                                               @RequestBody FileUpdateDTO dto,
                                               @CurrentUser UserCurrent userCurrent) {
         File fileDB = fileStorageService.updateFileMetaData(id, dto, userCurrent);
@@ -152,7 +156,7 @@ public class FileController {
 
     @PostMapping("/{id}/data")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> updateFileData(@PathVariable("id") String id,
+    public ResponseEntity<MessageResponse> updateFileData(@PathVariable("id") Long id,
                                                           @RequestParam("file") MultipartFile file,
                                                           @CurrentUser UserCurrent userCurrent) {
         String message;
@@ -169,7 +173,7 @@ public class FileController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteFile(@PathVariable String id, @CurrentUser UserCurrent userCurrent) {
+    public ResponseEntity<?> deleteFile(@PathVariable Long id, @CurrentUser UserCurrent userCurrent) {
         fileStorageService.deleteFile(id, userCurrent);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Deleted");
     }

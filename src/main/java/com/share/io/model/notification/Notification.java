@@ -27,7 +27,7 @@ public class Notification {
 
     private boolean isRead;
 
-    private String fileId;
+    private Long fileId;
 
     @Enumerated(EnumType.STRING)
     private NotificationType notificationType;
@@ -91,11 +91,11 @@ public class Notification {
         this.notificationType = notificationType;
     }
 
-    public String getFileId() {
+    public Long getFileId() {
         return fileId;
     }
 
-    public void setFileId(String fileId) {
+    public void setFileId(Long fileId) {
         this.fileId = fileId;
     }
 }

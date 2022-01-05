@@ -8,13 +8,26 @@ import com.share.io.model.user.User_;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 
+import static com.share.io.model.file.File_.CONTENT_TYPE;
+import static com.share.io.model.file.File_.DESCRIPTION;
+import static com.share.io.model.file.File_.EXTENSION;
+import static com.share.io.model.file.File_.FILE_TYPE;
+import static com.share.io.model.file.File_.NAME;
+import static com.share.io.model.file.File_.ORIGINAL_NAME;
+import static com.share.io.model.file.File_.UPDATE_DATE;
+import static com.share.io.model.file.File_.UPLOADER;
+import static com.share.io.model.file.File_.UPLOAD_DATE;
+import static com.share.io.model.file.File_.VERSION;
 import static com.share.io.model.user.User_.ID;
 import static com.share.io.model.user.User_.SHARED_FILES;
 import static com.share.io.util.SqlUtil.getContainsPredicate;
@@ -70,6 +83,14 @@ public class FileSpecification {
         }
         return (root, criteriaQuery, criteriaBuilder) -> getContainsPredicate(criteriaBuilder,
                 root.get(File_.name), query);
+    }
+
+    public static Specification<File> idEquals(Long id) {
+        if (ObjectUtils.isEmpty(id)) {
+            return Specification.where(null);
+        }
+        return (root, criteriaQuery, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get(File_.id), id);
     }
 
     public static Specification<File> descriptionContains(String query) {
@@ -135,5 +156,65 @@ public class FileSpecification {
                     String.class, root.get(File_.updateDate), criteriaBuilder.literal(MY_SQl_DATE_TIME_PATTERN));
             return getContainsPredicate(criteriaBuilder, formattedDate, query);
         };
+    }
+
+    public static Specification<File> sort(String sortField, String direction) {
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            Expression field = getField(sortField, root);
+
+            criteriaQuery.orderBy(
+                    criteriaBuilder.asc(criteriaBuilder.selectCase().when(criteriaBuilder.isNull(field),
+                            1).otherwise(0)),
+                    getOrder(criteriaBuilder, field, direction)
+            );
+
+
+            return criteriaBuilder.conjunction();
+        };
+    }
+
+    private static Expression getField(String name, Root<File> root) {
+
+        if (name == null) {
+            return root.get(File_.id);
+        }
+
+        switch (name) {
+            case ID:
+                return root.get(File_.id);
+            case NAME:
+                return root.get(File_.name);
+            case ORIGINAL_NAME:
+                return root.get(File_.originalName);
+            case DESCRIPTION:
+                return root.get(File_.description);
+            case FILE_TYPE:
+                return root.get(File_.fileType);
+            case EXTENSION:
+                return root.get(File_.extension);
+            case CONTENT_TYPE:
+                return root.get(File_.contentType);
+            case VERSION:
+                return root.get(File_.version);
+            case UPDATE_DATE:
+                return root.get(File_.updateDate);
+            case UPLOAD_DATE:
+                return root.get(File_.uploadDate);
+            case UPLOADER:
+                return root.join(File_.uploader, JoinType.LEFT).get(User_.username);
+            default:
+                return root.get(File_.id);
+        }
+    }
+
+    public static Order getOrder(CriteriaBuilder criteriaBuilder, Expression field, String direction) {
+        switch (direction) {
+            case "asc":
+                return criteriaBuilder.asc(field);
+            case "desc":
+                return criteriaBuilder.desc(field);
+            default:
+                return criteriaBuilder.asc(field);
+        }
     }
 }

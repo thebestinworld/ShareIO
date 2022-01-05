@@ -4,8 +4,10 @@ import com.share.io.model.user.User;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
@@ -20,9 +22,8 @@ import java.util.Set;
 public class File {
 
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "uuid2")
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String originalName;
 
@@ -30,7 +31,7 @@ public class File {
 
     private String description;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private FileType fileType;
 
     private String contentType;
@@ -56,11 +57,11 @@ public class File {
     public File() {
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

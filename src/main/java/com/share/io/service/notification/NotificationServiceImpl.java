@@ -4,6 +4,7 @@ import com.share.io.model.notification.Notification;
 import com.share.io.model.notification.NotificationType;
 import com.share.io.repository.notification.NotificationRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,7 +21,9 @@ public class NotificationServiceImpl implements NotificationService{
         this.notificationRepository = notificationRepository;
     }
 
-    public void sendNotification(NotificationType notificationType, String fileName, String fileId,
+    @Async
+    @Override
+    public void sendNotification(NotificationType notificationType, String fileName, Long fileId,
                                  Long userId, Long fromUserId, String username) {
         if (userId.equals(fromUserId)) {
             // No need to send notification for user the same user

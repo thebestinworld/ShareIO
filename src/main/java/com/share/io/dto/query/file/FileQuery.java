@@ -4,6 +4,8 @@ import java.time.LocalDate;
 
 public class FileQuery {
 
+    private Long id;
+
     private Long userId;
 
     private String originalName;
@@ -25,6 +27,22 @@ public class FileQuery {
     private LocalDate updateDate;
 
     private String uploaderName;
+
+    private String sort;
+
+    private String order;
+
+    private Integer page;
+
+    private Integer size;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Long getUserId() {
         return userId;
@@ -112,5 +130,37 @@ public class FileQuery {
 
     public void setUploaderName(String uploaderName) {
         this.uploaderName = uploaderName;
+    }
+
+    public String getSort() {
+        return sort;
+    }
+
+    public void setSort(String sort) {
+        this.sort = sort;
+    }
+
+    public String getOrder() {
+        return order;
+    }
+
+    public void setOrder(String order) {
+        this.order = order;
+    }
+
+    public Integer getPage() {
+        return page;
+    }
+
+    public void setPage(Integer page) {
+        this.page = page;
+    }
+
+    public Integer getSize() {
+        return size;
+    }
+
+    public void setSize(Integer size) {
+        this.size = size;
     }
 }

@@ -1,9 +1,11 @@
 package com.share.io.controller;
 
+import com.share.io.dto.user.UserDTO;
 import com.share.io.model.user.User;
 import com.share.io.repository.user.UserRepository;
 import com.share.io.security.CurrentUser;
 import com.share.io.security.UserCurrent;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -27,12 +30,12 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<User>> findUser(@CurrentUser UserCurrent userCurrent) {
+    public ResponseEntity<List<UserDTO>> findUser(@CurrentUser UserCurrent userCurrent) {
         List<User> allByIdNotIn = userRepository.findAllByIdNot(userCurrent.getId());
-        User user = new User();
-        user.setId(3L);
-        user.setUsername("Test Username");
-        allByIdNotIn.add(user);
-        return ResponseEntity.status(HttpStatus.OK).body(allByIdNotIn);
+        ModelMapper modelMapper = new ModelMapper();
+        List<UserDTO> userDTOS = allByIdNotIn.stream()
+                .map(user -> modelMapper.map(user, UserDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(userDTOS);
     }
 }
