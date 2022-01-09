@@ -1,9 +1,9 @@
 package com.share.io.service.reminder;
 
+import com.share.io.dto.query.reminder.ReminderQuery;
 import com.share.io.dto.reminder.ReminderDTO;
 import com.share.io.model.reminder.Reminder;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 public interface ReminderService {
 
@@ -11,9 +11,7 @@ public interface ReminderService {
 
     void deleteReminder(Long id);
 
-    List<Reminder> findAll(Long userId);
-
-    void deleteReminders(List<Reminder> reminders);
+    Page<Reminder> findAll(Long userId, ReminderQuery reminderQuery);
 
     void sendReminders();
 }

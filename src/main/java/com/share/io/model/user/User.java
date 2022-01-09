@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(	name = "user",
+@Table(name = "user",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "username"),
                 @UniqueConstraint(columnNames = "email")
@@ -47,20 +47,16 @@ public class User {
     private String password;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(	name = "user_roles",
+    @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
 
-    @OneToMany(mappedBy="uploader")
+    @OneToMany(mappedBy = "uploader")
     private Set<File> uploadedFiles;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_files",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "file_id"))
+    @ManyToMany(mappedBy = "sharedUsers")
     private Set<File> sharedFiles;
 
     public User() {

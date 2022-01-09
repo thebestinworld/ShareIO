@@ -1,17 +1,29 @@
 package com.share.io.service.notification;
 
+import com.share.io.dto.query.notification.NotificationQuery;
 import com.share.io.model.notification.Notification;
 import com.share.io.model.notification.NotificationType;
 import com.share.io.repository.notification.NotificationRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
-import java.util.List;
+
+import static com.share.io.repository.notification.NotificationSpecification.idEquals;
+import static com.share.io.repository.notification.NotificationSpecification.isRead;
+import static com.share.io.repository.notification.NotificationSpecification.messageContains;
+import static com.share.io.repository.notification.NotificationSpecification.receivedDateContains;
+import static com.share.io.repository.notification.NotificationSpecification.sort;
+import static com.share.io.repository.notification.NotificationSpecification.userIdEquals;
+
 
 @Service
-public class NotificationServiceImpl implements NotificationService{
+public class NotificationServiceImpl implements NotificationService {
 
     private final SimpMessagingTemplate template;
     private final NotificationRepository notificationRepository;
@@ -33,28 +45,45 @@ public class NotificationServiceImpl implements NotificationService{
         notification.setUserId(userId);
         notification.setFromUserId(fromUserId);
         notification.setFileId(fileId);
-        notification.setMessage(generateMessage(notificationType, fileName, username));
+        notification.setMessage(generateMessage(notificationType, fileId, username));
         notification.setReceivedDate(LocalDateTime.now());
         notification.setNotificationType(notificationType);
         notificationRepository.save(notification);
         template.convertAndSend("/topic/notification", notification);
     }
 
-    private String generateMessage(NotificationType notificationType, String fileName, String username){
-        switch (notificationType){
+    private String generateMessage(NotificationType notificationType, Long fileId, String username) {
+        switch (notificationType) {
             case FILE_UPDATED:
-                return String.format("File %s has been updated by %s", fileName, username);
+                return String.format("File %d has been updated by %s", fileId, username);
             case FILE_SHARED:
-                return String.format("File %s has been shared by %s", fileName, username);
+                return String.format("File %d has been shared by %s", fileId, username);
             case FILE_DELETED:
-                return String.format("File %s has been deleted by %s", fileName, username);
+                return String.format("File %d has been deleted by %s", fileId, username);
             default:
                 return "Default message";
         }
     }
 
     @Override
-    public List<Notification> findAllByUserId(Long userId) {
-        return this.notificationRepository.findAllByUserId(userId);
+    public Page<Notification> findAllByUserId(Long userId, NotificationQuery notificationQuery) {
+
+        Specification<Notification> specification = userIdEquals(userId)
+                .and(messageContains(notificationQuery.getMessage()))
+                .and(idEquals(notificationQuery.getId()))
+                .and(receivedDateContains(notificationQuery.getReceivedDate()))
+                .and(isRead(notificationQuery.getIsRead()))
+                .and(sort(notificationQuery.getSort(), notificationQuery.getOrder()));
+
+        return notificationRepository.findAll(specification,
+                PageRequest.of(notificationQuery.getPage(), notificationQuery.getSize()));
+    }
+
+    @Override
+    @Transactional
+    public Notification markAsRead(Long id) {
+        Notification notification = this.notificationRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        notification.setRead(true);
+        return notificationRepository.save(notification);
     }
 }

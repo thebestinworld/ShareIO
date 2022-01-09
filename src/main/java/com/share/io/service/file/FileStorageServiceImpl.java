@@ -1,5 +1,6 @@
 package com.share.io.service.file;
 
+import com.share.io.dto.email.EmailSubject;
 import com.share.io.dto.file.FileUpdateDTO;
 import com.share.io.dto.file.FileUploadDTO;
 import com.share.io.dto.query.file.FileQuery;
@@ -19,14 +20,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
+import static com.share.io.dto.email.EmailSubject.FILE_DELETE;
+import static com.share.io.dto.email.EmailSubject.FILE_SHARE;
 import static com.share.io.repository.file.FileSpecification.contentTypeContains;
 import static com.share.io.repository.file.FileSpecification.descriptionContains;
 import static com.share.io.repository.file.FileSpecification.extensionContains;
@@ -105,11 +108,18 @@ public class FileStorageServiceImpl implements FileStorageService {
             throw new RuntimeException();
         }
 
-        File result = fileRepository.save(file);
-        notificationService.sendNotification(NotificationType.FILE_UPDATED,
-                file.getName(), file.getId(), file.getUploader().getId(), userCurrent.getId(), userCurrent.getName());
-        emailService.sendSimpleMessage(userCurrent.getEmail(), "FILE_SH", "");
-        return result;
+        File save = fileRepository.save(file);
+        Set<User> usersToSendNotification = file.getSharedUsers();
+        usersToSendNotification.add(save.getUploader());
+        for (User user : usersToSendNotification) {
+            notificationService.sendNotification(NotificationType.FILE_UPDATED,
+                    file.getName(), file.getId(), user.getId(), userCurrent.getId(), userCurrent.getName());
+            emailService.sendSimpleMessage(user.getId(), userCurrent.getId(), user.getEmail(),
+                    EmailSubject.FILE_UPDATE, userCurrent.getName(), save.getId());
+        }
+
+
+        return save;
     }
 
     @Override
@@ -120,20 +130,32 @@ public class FileStorageServiceImpl implements FileStorageService {
         file.setDescription(fileUpdateDTO.getDescription());
         file.setVersion(file.getVersion() + 1L);
         File save = fileRepository.save(file);
-        notificationService.sendNotification(NotificationType.FILE_UPDATED,
-                file.getName(), file.getId(), file.getUploader().getId(), userCurrent.getId(), userCurrent.getName());
-        emailService.sendSimpleMessage(userCurrent.getEmail(), "FILE_SH", "");
+        Set<User> usersToSendNotification = file.getSharedUsers();
+        usersToSendNotification.add(save.getUploader());
+        for (User user : usersToSendNotification) {
+            notificationService.sendNotification(NotificationType.FILE_UPDATED,
+                    file.getName(), file.getId(), user.getId(), userCurrent.getId(), userCurrent.getName());
+            emailService.sendSimpleMessage(user.getId(), userCurrent.getId(), user.getEmail(),
+                    EmailSubject.FILE_UPDATE, userCurrent.getName(), save.getId());
+        }
         return save;
     }
 
     @Override
+    @Transactional
     public void deleteFile(Long id, UserCurrent userCurrent) {
         Optional<File> file = this.fileRepository.findById(id);
-        file.ifPresent(value -> notificationService.sendNotification(NotificationType.FILE_DELETED,
-                value.getName(), value.getId(), value.getUploader().getId(),
-                userCurrent.getId(), userCurrent.getName()));
-        emailService.sendSimpleMessage(userCurrent.getEmail(), "FILE_SH", "");
-        this.fileRepository.deleteById(id);
+        if (file.isPresent()) {
+            Set<User> usersToSendNotification = file.get().getSharedUsers();
+            usersToSendNotification.add(file.get().getUploader());
+            for (User user : usersToSendNotification) {
+                notificationService.sendNotification(NotificationType.FILE_DELETED,
+                        file.get().getName(), file.get().getId(), user.getId(), userCurrent.getId(), userCurrent.getName());
+                emailService.sendSimpleMessage(user.getId(), userCurrent.getId(), user.getEmail(),
+                        FILE_DELETE, userCurrent.getName(), file.get().getId());
+            }
+            fileRepository.delete(file.get());
+        }
     }
 
     @Override
@@ -141,17 +163,19 @@ public class FileStorageServiceImpl implements FileStorageService {
         //TODO: Add logging
         File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
         User user = userRepository.findById(sharedToUserId).orElseThrow(() -> new RuntimeException());
-        user.addSharedFile(file);
-        userRepository.save(user);
+        file.addShareUser(user);
 
         notificationService.sendNotification(NotificationType.FILE_SHARED,
                 file.getName(), file.getId(), sharedToUserId, userCurrent.getId(), userCurrent.getName());
-        emailService.sendSimpleMessage(userCurrent.getEmail(), "FILE_SH", "");
+        emailService.sendSimpleMessage(file.getUploader().getId(),
+                userCurrent.getId(), file.getUploader().getEmail(),
+                FILE_SHARE,
+                userCurrent.getEmail(), file.getId());
+        fileRepository.save(file);
     }
 
 
     public Page<File> findAllFilesBySpecification(FileQuery fileQuery) {
-        //TODO: Add sorting
         Specification<File> specification = uploaderIdEquals(fileQuery.getUserId())
                 .or(sharedUsersContain(fileQuery.getUserId()))
                 .and(nameContains(fileQuery.getName()))
@@ -167,9 +191,7 @@ public class FileStorageServiceImpl implements FileStorageService {
                 .and(uploaderNameContains(fileQuery.getUploaderName()))
                 .and(sort(fileQuery.getSort(), fileQuery.getOrder()));
 
-        Page<File> files = fileRepository.findAll(specification ,  PageRequest.of(fileQuery.getPage(), fileQuery.getSize()));
-
-        return files;
+        return fileRepository.findAll(specification, PageRequest.of(fileQuery.getPage(), fileQuery.getSize()));
     }
 
     @Override

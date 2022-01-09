@@ -3,8 +3,6 @@ package com.share.io.dto.file;
 import com.share.io.dto.user.UserDTO;
 import com.share.io.model.file.FileType;
 
-import java.time.LocalDateTime;
-
 public class FileDTO {
 
     private Long id;
@@ -32,6 +30,8 @@ public class FileDTO {
     private String encodedData;
 
     private String uploaderName;
+
+    private Long uploaderId;
 
     public FileDTO() {
     }
@@ -138,5 +138,13 @@ public class FileDTO {
 
     public void setUploaderName(String uploaderName) {
         this.uploaderName = uploaderName;
+    }
+
+    public Long getUploaderId() {
+        return uploaderId;
+    }
+
+    public void setUploaderId(Long uploaderId) {
+        this.uploaderId = uploaderId;
     }
 }

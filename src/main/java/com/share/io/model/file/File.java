@@ -1,7 +1,6 @@
 package com.share.io.model.file;
 
 import com.share.io.model.user.User;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -10,47 +9,41 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "file")
 public class File {
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_files",
+            joinColumns = @JoinColumn(name = "file_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    Set<User> sharedUsers;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String originalName;
-
     private String name;
-
     private String description;
-
     @Enumerated(EnumType.STRING)
     private FileType fileType;
-
     private String contentType;
-
     private String extension;
-
     private Long version;
-
     private LocalDateTime uploadDate;
-
     private LocalDateTime updateDate;
-
-    @ManyToOne
-    @JoinColumn(name="uploader_id", nullable=false)
+    @ManyToOne()
+    @JoinColumn(name = "uploader_id", nullable = false)
     private User uploader;
-
-    @ManyToMany(mappedBy = "sharedFiles")
-    Set<User> sharedUsers;
-
     @Lob
     private byte[] data;
 
@@ -159,5 +152,19 @@ public class File {
 
     public void setUpdateDate(LocalDateTime updateDate) {
         this.updateDate = updateDate;
+    }
+
+    public void addShareUser(User user) {
+        if (sharedUsers == null) {
+            sharedUsers = new HashSet<>();
+        }
+        sharedUsers.add(user);
+    }
+
+    public void removeSharedUser(User user) {
+        if (sharedUsers == null) {
+            return;
+        }
+        sharedUsers.remove(user);
     }
 }

@@ -11,7 +11,6 @@ public class BetweenQuery<T extends Comparable<? super T>> {
     public BetweenQuery(T min, T max) {
         this.setMin(min);
         this.setMax(max);
-//        this.setSearchRule(BetweenQuerySearchRule.EQUALS);
     }
 
     public T getMin() {
