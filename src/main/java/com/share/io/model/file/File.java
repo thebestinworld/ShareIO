@@ -39,6 +39,7 @@ public class File {
     private String contentType;
     private String extension;
     private Long version;
+    private Long lastVersion;
     private LocalDateTime uploadDate;
     private LocalDateTime updateDate;
     @ManyToOne()
@@ -166,5 +167,13 @@ public class File {
             return;
         }
         sharedUsers.remove(user);
+    }
+
+    public Long getLastVersion() {
+        return lastVersion;
+    }
+
+    public void setLastVersion(Long lastVersion) {
+        this.lastVersion = lastVersion;
     }
 }

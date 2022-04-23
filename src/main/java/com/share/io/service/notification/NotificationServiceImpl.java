@@ -67,7 +67,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public Page<Notification> findAllByUserId(Long userId, NotificationQuery notificationQuery) {
-
         Specification<Notification> specification = userIdEquals(userId)
                 .and(messageContains(notificationQuery.getMessage()))
                 .and(idEquals(notificationQuery.getId()))

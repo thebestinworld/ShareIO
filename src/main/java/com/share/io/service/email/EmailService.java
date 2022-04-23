@@ -4,6 +4,6 @@ import com.share.io.dto.email.EmailSubject;
 
 public interface EmailService {
 
-    void sendSimpleMessage(Long userId, Long fromId, String userEmail,
-                           EmailSubject subject, String username, Long fileId);
+    void sendMessage(Long userId, Long fromId, String userEmail,
+                     EmailSubject subject, String username, Long fileId);
 }

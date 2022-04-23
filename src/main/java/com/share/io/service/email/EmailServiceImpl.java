@@ -20,7 +20,8 @@ public class EmailServiceImpl implements EmailService {
 
     @Async
     @Override
-    public void sendSimpleMessage(Long userId, Long fromId, String userEmail, EmailSubject subject, String username, Long fileId) {
+    public void sendMessage(Long userId, Long fromId, String userEmail,
+                            EmailSubject subject, String username, Long fileId) {
         if (!sendEmail) {
             return;
         }
@@ -40,6 +41,10 @@ public class EmailServiceImpl implements EmailService {
         switch (subject) {
             case FILE_UPDATE:
                 return String.format("File %d has been updated by %s", fileId, username);
+            case FILE_SHARE:
+                return String.format("File %d has been shared by %s", fileId, username);
+            case FILE_DELETE:
+                return String.format("File %d has been deleted by %s", fileId, username);
             default:
                 return "";
         }

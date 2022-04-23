@@ -4,14 +4,18 @@ import com.share.io.dto.email.EmailSubject;
 import com.share.io.dto.file.FileUpdateDTO;
 import com.share.io.dto.file.FileUploadDTO;
 import com.share.io.dto.query.file.FileQuery;
+import com.share.io.model.eventlog.Event;
 import com.share.io.model.file.File;
 import com.share.io.model.file.FileType;
+import com.share.io.model.file.undo.FileSnap;
 import com.share.io.model.notification.NotificationType;
 import com.share.io.model.user.User;
 import com.share.io.repository.file.FileRepository;
 import com.share.io.repository.user.UserRepository;
 import com.share.io.security.UserCurrent;
 import com.share.io.service.email.EmailService;
+import com.share.io.service.file.undo.UndoService;
+import com.share.io.service.log.FileEventLogService;
 import com.share.io.service.notification.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,7 +30,6 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static com.share.io.dto.email.EmailSubject.FILE_DELETE;
 import static com.share.io.dto.email.EmailSubject.FILE_SHARE;
@@ -46,21 +49,27 @@ import static com.share.io.repository.file.FileSpecification.uploaderNameContain
 import static com.share.io.repository.file.FileSpecification.version;
 
 @Service
-public class FileStorageServiceImpl implements FileStorageService {
+public class FileServiceImpl implements FileService {
 
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final UndoService undoService;
+    private final FileEventLogService eventLogService;
 
-    public FileStorageServiceImpl(FileRepository fileRepository,
-                                  UserRepository userRepository,
-                                  NotificationService notificationService,
-                                  EmailService emailService) {
+    public FileServiceImpl(FileRepository fileRepository,
+                           UserRepository userRepository,
+                           NotificationService notificationService,
+                           EmailService emailService,
+                           UndoService undoService,
+                           FileEventLogService eventLogService) {
         this.fileRepository = fileRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.emailService = emailService;
+        this.undoService = undoService;
+        this.eventLogService = eventLogService;
     }
 
     @Override
@@ -89,6 +98,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         file.setDescription(fileDTO.getDescription());
         file.setUploader(user);
         file.setVersion(1L);
+        file.setLastVersion(1L);
         file.setUploadDate(LocalDateTime.now());
         return fileRepository.save(file);
     }
@@ -99,13 +109,14 @@ public class FileStorageServiceImpl implements FileStorageService {
         //TODO: Add custom exceptions
         File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
         try {
+            undoService.updateFileData(file, id, file.getLastVersion());
             file.setOriginalName(fileName);
             file.setContentType(fileData.getContentType());
             file.setData(fileData.getBytes());
             file.setExtension(StringUtils.getFilenameExtension(fileData.getOriginalFilename()));
             file.setFileType(FileType.getFileTypeFromExtension(file.getExtension()));
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e.getMessage());
         }
 
         File save = fileRepository.save(file);
@@ -114,30 +125,32 @@ public class FileStorageServiceImpl implements FileStorageService {
         for (User user : usersToSendNotification) {
             notificationService.sendNotification(NotificationType.FILE_UPDATED,
                     file.getName(), file.getId(), user.getId(), userCurrent.getId(), userCurrent.getName());
-            emailService.sendSimpleMessage(user.getId(), userCurrent.getId(), user.getEmail(),
+            emailService.sendMessage(user.getId(), userCurrent.getId(), user.getEmail(),
                     EmailSubject.FILE_UPDATE, userCurrent.getName(), save.getId());
         }
-
-
         return save;
     }
 
     @Override
     public File updateFileMetaData(Long id, FileUpdateDTO fileUpdateDTO, UserCurrent userCurrent) {
         File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        FileSnap fileSnap = undoService.generateSnap(file);
         file.setUpdateDate(LocalDateTime.now());
         file.setName(fileUpdateDTO.getName());
         file.setDescription(fileUpdateDTO.getDescription());
-        file.setVersion(file.getVersion() + 1L);
+        file.setLastVersion(file.getLastVersion() + 1L);
+        file.setVersion(file.getLastVersion());
         File save = fileRepository.save(file);
         Set<User> usersToSendNotification = file.getSharedUsers();
         usersToSendNotification.add(save.getUploader());
         for (User user : usersToSendNotification) {
             notificationService.sendNotification(NotificationType.FILE_UPDATED,
                     file.getName(), file.getId(), user.getId(), userCurrent.getId(), userCurrent.getName());
-            emailService.sendSimpleMessage(user.getId(), userCurrent.getId(), user.getEmail(),
+            emailService.sendMessage(user.getId(), userCurrent.getId(), user.getEmail(),
                     EmailSubject.FILE_UPDATE, userCurrent.getName(), save.getId());
         }
+        undoService.saveSnap(fileSnap);
+        eventLogService.logEvent(save.getId(), Event.UPDATED, userCurrent.getName());
         return save;
     }
 
@@ -151,7 +164,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             for (User user : usersToSendNotification) {
                 notificationService.sendNotification(NotificationType.FILE_DELETED,
                         file.get().getName(), file.get().getId(), user.getId(), userCurrent.getId(), userCurrent.getName());
-                emailService.sendSimpleMessage(user.getId(), userCurrent.getId(), user.getEmail(),
+                emailService.sendMessage(user.getId(), userCurrent.getId(), user.getEmail(),
                         FILE_DELETE, userCurrent.getName(), file.get().getId());
             }
             fileRepository.delete(file.get());
@@ -167,7 +180,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         notificationService.sendNotification(NotificationType.FILE_SHARED,
                 file.getName(), file.getId(), sharedToUserId, userCurrent.getId(), userCurrent.getName());
-        emailService.sendSimpleMessage(file.getUploader().getId(),
+        emailService.sendMessage(file.getUploader().getId(),
                 userCurrent.getId(), file.getUploader().getEmail(),
                 FILE_SHARE,
                 userCurrent.getEmail(), file.getId());
@@ -175,6 +188,7 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
 
+    @Override
     public Page<File> findAllFilesBySpecification(FileQuery fileQuery) {
         Specification<File> specification = uploaderIdEquals(fileQuery.getUserId())
                 .or(sharedUsersContain(fileQuery.getUserId()))
@@ -197,10 +211,5 @@ public class FileStorageServiceImpl implements FileStorageService {
     @Override
     public File getFileById(Long id) {
         return fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
-    }
-
-    @Override
-    public Stream<File> getAllFiles() {
-        return fileRepository.findAll().stream();
     }
 }

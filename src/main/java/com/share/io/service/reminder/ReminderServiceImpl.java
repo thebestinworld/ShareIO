@@ -80,9 +80,9 @@ public class ReminderServiceImpl implements ReminderService {
         this.reminderRepository.saveAll(remindersToSend);
     }
 
-    @EventListener(ApplicationReadyEvent.class)
     @Transactional
-    public void doSomethingAfterStartup() {
+    @EventListener(ApplicationReadyEvent.class)
+    public void updateOldReminders() {
         this.reminderRepository.updatePastDueReminders();
     }
 }
