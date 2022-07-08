@@ -1,14 +1,12 @@
 package com.share.io.repository.user;
 
+import static com.share.io.util.SqlUtil.getContainsPredicate;
 import com.share.io.model.user.User;
 import com.share.io.model.user.User_;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.ObjectUtils;
 
-import static com.share.io.util.SqlUtil.getContainsPredicate;
-
 public class UserSpecification {
-
 
     public static Specification<User> usernameContains(String query) {
         if (ObjectUtils.isEmpty(query)) {

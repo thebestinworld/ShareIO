@@ -9,5 +9,9 @@ public interface FileEventLogService {
 
     void logEvent(Long fileId, Event event, String userName);
 
+    void logEvent(Long fileId, Event event, String userName, String dynamicContent);
+
     Page<FileEventLog> findAll(FileEventLogQuery fileEventLogQuery);
+
+    void deleteEventLogsByFileId(Long fileId);
 }

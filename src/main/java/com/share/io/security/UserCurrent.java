@@ -1,7 +1,6 @@
 package com.share.io.security;
 
 import com.share.io.model.role.Role;
-
 import java.util.Set;
 
 public class UserCurrent {

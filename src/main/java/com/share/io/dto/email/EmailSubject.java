@@ -4,7 +4,8 @@ public enum EmailSubject {
 
     FILE_UPDATE("File %d has been updated"),
     FILE_SHARE("File %d has been shared"),
-    FILE_DELETE("File %d has been deleted");
+    FILE_DELETE("File %d has been deleted"),
+    FILE_REVERTED("File %d has been reverted");
 
     private final String subject;
 

@@ -1,20 +1,18 @@
 package com.share.io.repository.reminder;
 
-import com.share.io.model.reminder.Reminder;
-import com.share.io.model.reminder.Reminder_;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.util.ObjectUtils;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Root;
-
 import static com.share.io.model.reminder.Reminder_.MESSAGE;
 import static com.share.io.model.reminder.Reminder_.PAST_DUE;
 import static com.share.io.model.reminder.Reminder_.TIME;
 import static com.share.io.model.user.User_.ID;
 import static com.share.io.util.SqlUtil.getContainsPredicate;
+import com.share.io.model.reminder.Reminder;
+import com.share.io.model.reminder.Reminder_;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.ObjectUtils;
 
 public class ReminderSpecification {
 

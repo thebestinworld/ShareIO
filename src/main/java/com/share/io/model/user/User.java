@@ -3,7 +3,6 @@ package com.share.io.model.user;
 
 import com.share.io.model.file.File;
 import com.share.io.model.role.Role;
-
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;

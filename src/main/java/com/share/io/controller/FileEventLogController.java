@@ -30,7 +30,7 @@ public class FileEventLogController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<FileEventLogViewDTO> findAllNotification(@RequestBody FileEventLogQuery fileEventLogQuery) {
+    public ResponseEntity<FileEventLogViewDTO> findAllFileEventLogs(@RequestBody FileEventLogQuery fileEventLogQuery) {
         Page<FileEventLog> result = eventLogService.findAll(fileEventLogQuery);
         FileEventLogViewDTO fileEventLogViewDTO = new FileEventLogViewDTO();
         fileEventLogViewDTO.setItems(eventLogConverter.convert(result.getContent()));

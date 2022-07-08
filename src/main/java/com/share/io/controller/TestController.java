@@ -1,11 +1,6 @@
 package com.share.io.controller;
 
 
-import com.share.io.repository.user.UserRepository;
-import com.share.io.service.email.EmailService;
-import com.share.io.service.file.FileService;
-import com.share.io.service.notification.NotificationService;
-import com.share.io.service.reminder.ReminderService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,21 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
-
-    private final UserRepository userRepository;
-    private final FileService fileService;
-    private final NotificationService notificationService;
-    private final EmailService emailService;
-    private final ReminderService reminderService;
-
-    public TestController(UserRepository userRepository, FileService fileService,
-                          NotificationService notificationService, EmailService emailService, ReminderService reminderService) {
-        this.userRepository = userRepository;
-        this.fileService = fileService;
-        this.notificationService = notificationService;
-        this.emailService = emailService;
-        this.reminderService = reminderService;
-    }
 
     @GetMapping("/all")
     public String allAccess() {

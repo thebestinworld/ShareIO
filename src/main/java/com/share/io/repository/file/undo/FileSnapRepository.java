@@ -2,14 +2,11 @@ package com.share.io.repository.file.undo;
 
 import com.share.io.model.file.FileType;
 import com.share.io.model.file.undo.FileSnap;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import org.springframework.util.StringUtils;
-
-import java.util.Collection;
-import java.util.List;
 
 @Repository
 public interface FileSnapRepository extends JpaRepository<FileSnap, Long> {
@@ -28,8 +25,7 @@ public interface FileSnapRepository extends JpaRepository<FileSnap, Long> {
             + "             f.update_date             = snap.update_date, "
             + "             f.data                    = snap.data, "
             + "             f.version                 = snap.version "
-       ,
-            nativeQuery = true)
+            , nativeQuery = true)
     void revertToVersion(Long version);
 
     @Modifying

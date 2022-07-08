@@ -1,13 +1,12 @@
 package com.share.io.model.file;
 
-import org.springframework.util.ObjectUtils;
-
 import java.util.List;
+import org.springframework.util.ObjectUtils;
 
 public enum FileType {
     AUDIO(List.of("wav", "mp3")),
-    VIDEO(List.of("mp4", "webm")),
-    IMAGE(List.of("png", "jpeg"));
+    VIDEO(List.of("mp4", "webm", "ogg")),
+    IMAGE(List.of("png", "jpg", "gif"));
 
     private final List<String> allowedExtensions;
 

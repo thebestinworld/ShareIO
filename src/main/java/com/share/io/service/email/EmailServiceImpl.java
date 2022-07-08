@@ -29,7 +29,7 @@ public class EmailServiceImpl implements EmailService {
             return;
         }
         SimpleMailMessage message = new SimpleMailMessage();
-        //Not working with google api
+        //Not working with Google api
         message.setFrom("noreply@shareio.com");
         message.setTo(userEmail);
         message.setSubject(String.format(subject.getSubject(), fileId));
@@ -45,6 +45,8 @@ public class EmailServiceImpl implements EmailService {
                 return String.format("File %d has been shared by %s", fileId, username);
             case FILE_DELETE:
                 return String.format("File %d has been deleted by %s", fileId, username);
+            case FILE_REVERTED:
+                return String.format("File %d has been reverted by %s", fileId, username);
             default:
                 return "";
         }

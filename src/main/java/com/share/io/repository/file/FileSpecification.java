@@ -1,23 +1,5 @@
 package com.share.io.repository.file;
 
-import com.share.io.model.file.File;
-import com.share.io.model.file.FileType;
-import com.share.io.model.file.File_;
-import com.share.io.model.user.User;
-import com.share.io.model.user.User_;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.util.ObjectUtils;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Subquery;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-
 import static com.share.io.model.file.File_.CONTENT_TYPE;
 import static com.share.io.model.file.File_.DESCRIPTION;
 import static com.share.io.model.file.File_.EXTENSION;
@@ -31,6 +13,22 @@ import static com.share.io.model.file.File_.VERSION;
 import static com.share.io.model.user.User_.ID;
 import static com.share.io.model.user.User_.SHARED_FILES;
 import static com.share.io.util.SqlUtil.getContainsPredicate;
+import com.share.io.model.file.File;
+import com.share.io.model.file.FileType;
+import com.share.io.model.file.File_;
+import com.share.io.model.user.User;
+import com.share.io.model.user.User_;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Collection;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.ObjectUtils;
 
 public class FileSpecification {
 

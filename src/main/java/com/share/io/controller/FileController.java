@@ -12,6 +12,7 @@ import com.share.io.model.file.File;
 import com.share.io.security.CurrentUser;
 import com.share.io.security.UserCurrent;
 import com.share.io.service.file.FileService;
+import java.util.Base64;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -28,8 +29,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Base64;
 
 @Controller
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -114,18 +113,16 @@ public class FileController {
     public ResponseEntity<MessageResponse> updateFileData(@PathVariable("id") Long id,
                                                           @RequestParam("file") MultipartFile file,
                                                           @CurrentUser UserCurrent userCurrent) {
-        String message;
-
-            File result = fileService.update(id, file, userCurrent);
-            message = "Uploaded the file successfully with id: " + result.getId();
-
-            return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
+        File result = fileService.update(id, file, userCurrent);
+        String message = "Uploaded the file successfully with id: " + result.getId();
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse(message));
 
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteFile(@PathVariable Long id, @CurrentUser UserCurrent userCurrent) {
+
         fileService.deleteFile(id, userCurrent);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Deleted");
     }

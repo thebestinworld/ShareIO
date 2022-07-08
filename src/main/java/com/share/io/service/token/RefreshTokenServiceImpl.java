@@ -4,13 +4,12 @@ import com.share.io.exception.TokenRefreshException;
 import com.share.io.model.token.RefreshToken;
 import com.share.io.repository.token.RefreshTokenRepository;
 import com.share.io.repository.user.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import javax.transaction.Transactional;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
@@ -48,7 +47,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
             refreshTokenRepository.delete(token);
-            throw new TokenRefreshException(token.getToken(), "Refresh token was expired. Please make a new signin request");
+            throw new TokenRefreshException(token.getToken(),
+                    "Refresh token was expired. Please make a new Sign In request");
         }
 
         return token;

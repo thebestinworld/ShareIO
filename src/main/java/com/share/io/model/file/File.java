@@ -1,7 +1,6 @@
 package com.share.io.model.file;
 
 import com.share.io.model.user.User;
-
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;

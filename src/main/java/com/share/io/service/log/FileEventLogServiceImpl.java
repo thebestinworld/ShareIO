@@ -33,8 +33,8 @@ public class FileEventLogServiceImpl implements FileEventLogService {
         this.eventLogRepository = eventLogRepository;
     }
 
-    @Override
     @Async
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEvent(Long fileId, Event event, String userName) {
         FileEventLog eventLog = new FileEventLog();
@@ -43,6 +43,19 @@ public class FileEventLogServiceImpl implements FileEventLogService {
         eventLog.setEvent(event);
         eventLog.setUserName(userName);
 
+        eventLogRepository.save(eventLog);
+    }
+
+    @Async
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logEvent(Long fileId, Event event, String userName, String dynamicContent) {
+        FileEventLog eventLog = new FileEventLog();
+        eventLog.setFileId(fileId);
+        eventLog.setTimestamp(LocalDateTime.now(ZoneOffset.UTC));
+        eventLog.setEvent(event);
+        eventLog.setUserName(userName);
+        eventLog.setDynamicContent(dynamicContent);
         eventLogRepository.save(eventLog);
     }
 
@@ -58,5 +71,11 @@ public class FileEventLogServiceImpl implements FileEventLogService {
 
         return eventLogRepository.findAll(specification,
                 PageRequest.of(fileEventLogQuery.getPage(), fileEventLogQuery.getSize()));
+    }
+
+    @Override
+    @Transactional
+    public void deleteEventLogsByFileId(Long fileId) {
+        this.eventLogRepository.deleteByFileId(fileId);
     }
 }

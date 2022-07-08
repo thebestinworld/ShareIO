@@ -4,12 +4,11 @@ import com.share.io.model.file.File;
 import com.share.io.model.file.undo.FileSnap;
 import com.share.io.repository.file.undo.FileSnapRepository;
 import com.share.io.security.UserCurrent;
+import javax.transaction.Transactional;
+import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import javax.transaction.Transactional;
-import java.util.List;
 
 @Service
 public class UndoServiceImpl implements UndoService {
@@ -40,8 +39,8 @@ public class UndoServiceImpl implements UndoService {
         fileSnapRepository.revertToVersion(versionId);
     }
 
-    @Override
     @Async
+    @Override
     @Transactional
     public void cleanHistory(Long fileId) {
         this.fileSnapRepository.deleteByFileId(fileId);
@@ -55,7 +54,8 @@ public class UndoServiceImpl implements UndoService {
     @Override
     @Transactional
     public void updateFileData(File file, Long fileId, Long version) {
-        fileSnapRepository.updateFileSnap(file.getData(), file.getOriginalName(), file.getContentType(), file.getExtension(), file.getFileType()
-                ,  fileId,  version);
+        fileSnapRepository.updateFileSnap(file.getData(), file.getOriginalName(),
+                file.getContentType(), file.getExtension(),
+                file.getFileType(), fileId, version);
     }
 }

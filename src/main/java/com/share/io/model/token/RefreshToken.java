@@ -1,7 +1,6 @@
 package com.share.io.model.token;
 
 import com.share.io.model.user.User;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

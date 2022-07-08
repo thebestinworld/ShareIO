@@ -1,7 +1,6 @@
 package com.share.io.model.file.undo;
 
 import com.share.io.model.file.FileType;
-
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -9,6 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Lob;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Entity
 @IdClass(FileSnap.FileSnapPK.class)
@@ -32,6 +32,10 @@ public class FileSnap {
     private String contentType;
 
     private String extension;
+
+    private LocalDateTime uploadDate;
+
+    private LocalDateTime updateDate;
 
     @Lob
     private byte[] data;
@@ -106,6 +110,22 @@ public class FileSnap {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public LocalDateTime getUploadDate() {
+        return uploadDate;
+    }
+
+    public void setUploadDate(LocalDateTime uploadDate) {
+        this.uploadDate = uploadDate;
+    }
+
+    public LocalDateTime getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(LocalDateTime updateDate) {
+        this.updateDate = updateDate;
     }
 
     static class FileSnapPK implements Serializable {

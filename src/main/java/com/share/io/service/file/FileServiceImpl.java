@@ -1,36 +1,5 @@
 package com.share.io.service.file;
 
-import com.share.io.dto.email.EmailSubject;
-import com.share.io.dto.file.FileUpdateDTO;
-import com.share.io.dto.file.FileUploadDTO;
-import com.share.io.dto.query.file.FileQuery;
-import com.share.io.model.eventlog.Event;
-import com.share.io.model.file.File;
-import com.share.io.model.file.FileType;
-import com.share.io.model.file.undo.FileSnap;
-import com.share.io.model.notification.NotificationType;
-import com.share.io.model.user.User;
-import com.share.io.repository.file.FileRepository;
-import com.share.io.repository.user.UserRepository;
-import com.share.io.security.UserCurrent;
-import com.share.io.service.email.EmailService;
-import com.share.io.service.file.undo.UndoService;
-import com.share.io.service.log.FileEventLogService;
-import com.share.io.service.notification.NotificationService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.transaction.Transactional;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
 import static com.share.io.dto.email.EmailSubject.FILE_DELETE;
 import static com.share.io.dto.email.EmailSubject.FILE_SHARE;
 import static com.share.io.repository.file.FileSpecification.contentTypeContains;
@@ -47,6 +16,36 @@ import static com.share.io.repository.file.FileSpecification.uploadDateContains;
 import static com.share.io.repository.file.FileSpecification.uploaderIdEquals;
 import static com.share.io.repository.file.FileSpecification.uploaderNameContains;
 import static com.share.io.repository.file.FileSpecification.version;
+import com.share.io.dto.email.EmailSubject;
+import com.share.io.dto.file.FileUpdateDTO;
+import com.share.io.dto.file.FileUploadDTO;
+import com.share.io.dto.query.file.FileQuery;
+import com.share.io.exception.ApiException;
+import com.share.io.model.eventlog.Event;
+import com.share.io.model.file.File;
+import com.share.io.model.file.FileType;
+import com.share.io.model.file.undo.FileSnap;
+import com.share.io.model.notification.NotificationType;
+import com.share.io.model.user.User;
+import com.share.io.repository.file.FileRepository;
+import com.share.io.repository.user.UserRepository;
+import com.share.io.security.UserCurrent;
+import com.share.io.service.email.EmailService;
+import com.share.io.service.file.undo.UndoService;
+import com.share.io.service.log.FileEventLogService;
+import com.share.io.service.notification.NotificationService;
+import javax.transaction.Transactional;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -75,8 +74,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public File save(Long id, MultipartFile fileData, Long uploaderId) {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(fileData.getOriginalFilename()));
-        //TODO: Add custom exceptions
-        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        File file = fileRepository.findById(id).orElseThrow(() -> new ApiException("File does not exist!"));
         try {
             file.setOriginalName(fileName);
             file.setContentType(fileData.getContentType());
@@ -84,7 +82,7 @@ public class FileServiceImpl implements FileService {
             file.setExtension(StringUtils.getFilenameExtension(fileData.getOriginalFilename()));
             file.setFileType(FileType.getFileTypeFromExtension(file.getExtension()));
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new ApiException("Error when saving file data!");
         }
 
         return fileRepository.save(file);
@@ -92,7 +90,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public File saveFileMetadata(FileUploadDTO fileDTO, Long uploaderId) {
-        User user = userRepository.findById(uploaderId).orElseThrow(() -> new RuntimeException());
+        User user = userRepository.findById(uploaderId).orElseThrow(() -> new ApiException("User does not exist!"));
         File file = new File();
         file.setName(fileDTO.getName());
         file.setDescription(fileDTO.getDescription());
@@ -100,14 +98,15 @@ public class FileServiceImpl implements FileService {
         file.setVersion(1L);
         file.setLastVersion(1L);
         file.setUploadDate(LocalDateTime.now());
-        return fileRepository.save(file);
+        File save = fileRepository.save(file);
+        eventLogService.logEvent(file.getId(), Event.UPLOADED, user.getUsername());
+        return save;
     }
 
     @Override
     public File update(Long id, MultipartFile fileData, UserCurrent userCurrent) {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(fileData.getOriginalFilename()));
-        //TODO: Add custom exceptions
-        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        File file = fileRepository.findById(id).orElseThrow(() -> new ApiException("File does not exist!"));
         try {
             undoService.updateFileData(file, id, file.getLastVersion());
             file.setOriginalName(fileName);
@@ -116,9 +115,13 @@ public class FileServiceImpl implements FileService {
             file.setExtension(StringUtils.getFilenameExtension(fileData.getOriginalFilename()));
             file.setFileType(FileType.getFileTypeFromExtension(file.getExtension()));
         } catch (IOException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new ApiException("Error when updating file data!");
         }
 
+        return sendUpdateFileNotification(userCurrent, file);
+    }
+
+    private File sendUpdateFileNotification(UserCurrent userCurrent, File file) {
         File save = fileRepository.save(file);
         Set<User> usersToSendNotification = file.getSharedUsers();
         usersToSendNotification.add(save.getUploader());
@@ -133,22 +136,14 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public File updateFileMetaData(Long id, FileUpdateDTO fileUpdateDTO, UserCurrent userCurrent) {
-        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        File file = fileRepository.findById(id).orElseThrow(() -> new ApiException("File does not exist!"));
         FileSnap fileSnap = undoService.generateSnap(file);
         file.setUpdateDate(LocalDateTime.now());
         file.setName(fileUpdateDTO.getName());
         file.setDescription(fileUpdateDTO.getDescription());
         file.setLastVersion(file.getLastVersion() + 1L);
         file.setVersion(file.getLastVersion());
-        File save = fileRepository.save(file);
-        Set<User> usersToSendNotification = file.getSharedUsers();
-        usersToSendNotification.add(save.getUploader());
-        for (User user : usersToSendNotification) {
-            notificationService.sendNotification(NotificationType.FILE_UPDATED,
-                    file.getName(), file.getId(), user.getId(), userCurrent.getId(), userCurrent.getName());
-            emailService.sendMessage(user.getId(), userCurrent.getId(), user.getEmail(),
-                    EmailSubject.FILE_UPDATE, userCurrent.getName(), save.getId());
-        }
+        File save = sendUpdateFileNotification(userCurrent, file);
         undoService.saveSnap(fileSnap);
         eventLogService.logEvent(save.getId(), Event.UPDATED, userCurrent.getName());
         return save;
@@ -167,15 +162,16 @@ public class FileServiceImpl implements FileService {
                 emailService.sendMessage(user.getId(), userCurrent.getId(), user.getEmail(),
                         FILE_DELETE, userCurrent.getName(), file.get().getId());
             }
+            undoService.cleanHistory(file.get().getId());
+            eventLogService.deleteEventLogsByFileId(file.get().getId());
             fileRepository.delete(file.get());
         }
     }
 
     @Override
     public void shareFile(Long id, Long userId, Long sharedToUserId, UserCurrent userCurrent) {
-        //TODO: Add logging
-        File file = fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
-        User user = userRepository.findById(sharedToUserId).orElseThrow(() -> new RuntimeException());
+        File file = fileRepository.findById(id).orElseThrow(() -> new ApiException("File does not exist!"));
+        User user = userRepository.findById(sharedToUserId).orElseThrow(() -> new ApiException("User does not exist!"));
         file.addShareUser(user);
 
         notificationService.sendNotification(NotificationType.FILE_SHARED,
@@ -184,6 +180,7 @@ public class FileServiceImpl implements FileService {
                 userCurrent.getId(), file.getUploader().getEmail(),
                 FILE_SHARE,
                 userCurrent.getEmail(), file.getId());
+        eventLogService.logEvent(file.getId(), Event.SHARED, userCurrent.getName());
         fileRepository.save(file);
     }
 
@@ -210,6 +207,6 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public File getFileById(Long id) {
-        return fileRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        return fileRepository.findById(id).orElseThrow(() -> new ApiException("File does not exist!"));
     }
 }

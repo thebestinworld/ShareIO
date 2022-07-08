@@ -1,20 +1,18 @@
 package com.share.io.repository.notification;
 
-import com.share.io.model.notification.Notification;
-import com.share.io.model.notification.Notification_;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.util.ObjectUtils;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Root;
-
 import static com.share.io.model.notification.Notification_.IS_READ;
 import static com.share.io.model.notification.Notification_.RECEIVED_DATE;
 import static com.share.io.model.reminder.Reminder_.MESSAGE;
 import static com.share.io.model.user.User_.ID;
 import static com.share.io.util.SqlUtil.getContainsPredicate;
+import com.share.io.model.notification.Notification;
+import com.share.io.model.notification.Notification_;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.ObjectUtils;
 
 public class NotificationSpecification {
 
